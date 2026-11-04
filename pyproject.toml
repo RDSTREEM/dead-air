@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "dead-air"
 version = "0.1.0"
 description = "A cosmic horror radio investigation game"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12"
 
 dependencies = [
     "PySide6>=6.8",
