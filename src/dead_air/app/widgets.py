@@ -3,6 +3,7 @@ import math
 from PySide6.QtCore import Qt, Signal, QRectF, QPointF
 from PySide6.QtGui import (
     QMouseEvent,
+    QPaintEvent,
     QPainter,
     QPen,
     QBrush,
@@ -89,3 +90,52 @@ class FrequencyDial(QWidget):
         delta = event.angleDelta().y()
         step = 0.1 if delta > 0 else -0.1
         self.set_freq(round(self.freq + step, 3))
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # i miss flutter auto compelete
+        painter = QPainter(self)
+        painter.setRenderHint(
+            QPainter.RenderHint.Antialiasing
+        )  # im not sure if this one would look good with aliasing tho may change it to give a better radio feel
+        side = min(self.width(), self.height())
+
+        painter.translate(self.width() / 2, self.height() / 2)
+
+        scale = side / 220
+        painter.scale(scale, scale)
+
+        # this is going to be horrible i tell u
+        painter.setPen(QPen(QColor("#465247"), 3))
+        painter.setBrush(QColor("#171D19"))
+        painter.drawEllipse(QRectF(-100, -100, 200, 200))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#08100D"))
+        painter.drawEllipse(QRectF(-88, -88, 176, 176))
+
+        markings = 5  # very dumb name but like the marking per each thingi, u know how a ruler is
+
+        for i in range(31):
+            r = i / 30
+            angle = math.radians(135 + r * 270)
+
+            out = 83
+            inner = 73 if i % markings == 0 else 78
+
+            c = math.cos(angle)
+            s = math.sin(angle)
+
+            x1 = c * inner  # ?finally trig coming in handy???
+            y1 = s * inner
+
+            x2 = c * out
+            y2 = s * out
+
+            painter.setPen(
+                QPen(QColor("#9D8891"), 1.8 if i % markings == 0 else 0.8)
+            )  # writing in this pascal or camel whatever it is called case in python is really annoying
+            painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
+
+        angle = math.radians(135 + self._ratio() * 270)
+        painter.setPen(QPen(QColor("#D59A50"), 2.5))
+        painter.drawLine(
+            QPointF(0, 0), QPointF(math.cos(angle) * 67, math.sin(angle) * 67)
+        )
