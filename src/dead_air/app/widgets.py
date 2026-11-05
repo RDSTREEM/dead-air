@@ -20,14 +20,14 @@ class Panel(QFrame):
 
         self.setObjectName("Panel")
 
-        self._layout = QVBoxLayout(self)
-        self._layout.setContentsMargins(12, 12, 12, 12)
-        self._layout.setSpacing(10)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(12, 12, 12, 12)
+        self.main_layout.setSpacing(10)
 
         self.title = QLabel(title.upper())
         self.title.setObjectName("PanelTitle")
 
-        self._layout.addWidget(self.title)
+        self.main_layout.addWidget(self.title)
 
 
 class FrequencyDial(QWidget):

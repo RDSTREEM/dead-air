@@ -73,4 +73,10 @@ class MainWindow(QMainWindow):
 
         self.freq = FrequencyDial()
 
+        d_cont.addStretch()
+        d_cont.addWidget(self.freq)
+        d_cont.addStretch
+
+        panel.main_layout.addLayout(d_cont)
+
         return panel
