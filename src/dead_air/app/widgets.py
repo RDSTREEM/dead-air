@@ -8,6 +8,7 @@ from PySide6.QtGui import (
     QBrush,
     QColor,
     QFont,
+    QWheelEvent,
 )
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QLabel
 
@@ -78,4 +79,13 @@ class FrequencyDial(QWidget):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            super().mousePressEvent(event)
+            self._set_from_pos(event.position())
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self._set_from_pos(event.position())
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.angleDelta().y()
+        step = 0.1 if delta > 0 else -0.1
+        self.set_freq(round(self.freq + step, 3))
