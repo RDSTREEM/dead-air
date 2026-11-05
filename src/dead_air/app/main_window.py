@@ -5,9 +5,10 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
+    QHBoxLayout,
 )
 
-from dead_air.app.widgets import Panel
+from dead_air.app.widgets import Panel, FrequencyDial
 
 
 class MainWindow(QMainWindow):
@@ -67,5 +68,9 @@ class MainWindow(QMainWindow):
         panel = Panel("01/ Reciever")
         panel.setMaximumWidth(260)
         panel.setMinimumWidth(290)
+
+        d_cont = QHBoxLayout()
+
+        self.freq = FrequencyDial()
 
         return panel
