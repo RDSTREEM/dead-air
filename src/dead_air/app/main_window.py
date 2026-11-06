@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
     QHBoxLayout,
+    QFrame,
 )
 
 from dead_air.app.widgets import Panel, FrequencyDial
@@ -150,8 +151,11 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(c)
 
         layout = QVBoxLayout(c)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(12, 12, 12, 8)
+        layout.setSpacing(10)
+        # layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        layout.addWidget(self.create_header())
         title = QLabel("DEAD AIR")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title.setStyleSheet("""
@@ -189,3 +193,32 @@ class MainWindow(QMainWindow):
         panel.main_layout.addLayout(d_cont)
 
         return panel
+
+    def create_header(self):
+        header = QFrame()
+        header.setObjectName("Panel")
+        layout = QHBoxLayout(header)
+        layout.setContentsMargins(15, 10, 15, 10)
+
+        identity = QVBoxLayout()
+
+        title = QLabel("DEAD AIR")
+        title.setObjectName("HeaderTitle")
+
+        subtitle = QLabel("BLACKWATER COASTAL RADIO STATION")
+        subtitle.setObjectName("HeaderSubtitle")
+        identity.addWidget(title)
+        identity.addWidget(subtitle)
+
+        layout.addLayout(identity)
+
+        layout.addStretch()
+
+        station = QLabel("Station: BCR-17")
+        station.setObjectName("StatusValue")
+
+        system = QLabel(
+            "ARCHIVE SYSTEM: ONLINE"
+        )  # since the puzzles starts as an archival thingi
+
+        return header
