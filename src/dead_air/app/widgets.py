@@ -139,3 +139,28 @@ class FrequencyDial(QWidget):
         painter.drawLine(
             QPointF(0, 0), QPointF(math.cos(angle) * 67, math.sin(angle) * 67)
         )
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#D59A50"))
+        painter.drawEllipse(QRectF(-5, -5, 10, 10))
+
+        painter.setPen(QColor("#9D8891"))
+
+        font = QFont("Consolas", 10)
+        font.setBold(True)
+        painter.setFont(font)
+
+        painter.drawText(
+            QRectF(-65, 28, 130, 25),
+            Qt.AlignmentFlag.AlignCenter,
+            f"{self.freq:.3f}",
+        )
+
+        painter.setPen(QColor("#657A61"))
+        painter.setFont(QFont("Consolas", 7))
+
+        painter.drawText(
+            QRectF(-65, 48, 130, 15),
+            Qt.AlignmentFlag.AlignCenter,
+            "MHz",
+        )
