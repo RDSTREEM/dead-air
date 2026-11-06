@@ -214,3 +214,33 @@ class SignalMeter(QWidget):
                 2,
                 2,
             )
+
+
+class Analyzer(QWidget):
+    # for now, will add actual forier [wow spelling] transform and stuff later
+
+    def __init__(self, name: str, parent=None):
+        super().__init__(parent)
+
+        self.name = name
+        self.setMinimumSize(300, 220)
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        painter = QPainter(self)
+
+        painter.fillRect(self.rect(), QColor("#080D0A"))
+
+        painter.setPen(QPen(QColor("#1D2B20"), 1))
+
+        space = 30
+
+        for x in range(0, self.width(), space):
+            painter.drawLine(x, 0, x, self.height())
+
+        for y in range(0, self.width(), space):
+            painter.drawLine(0, y, self.width(), y)
+
+        painter.setPen(QColor("#657A61"))
+        painter.setFont(QFont("Consolas", 10))
+
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No Signal Data")
