@@ -11,9 +11,10 @@ from PySide6.QtWidgets import (
     QListWidget,
     QPushButton,
     QTextEdit,
+    QDoubleSpinBox,
 )
 
-from dead_air.app.widgets import Panel, FrequencyDial, Analyzer
+from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter
 
 
 class MainWindow(QMainWindow):
@@ -166,8 +167,11 @@ class MainWindow(QMainWindow):
 
         workstation.addWidget(self.create_reciever(), 0)
         workstation.addWidget(self.create_analyzer(), 1)
+        workstation.addWidget(self.create_archive(), 0)
 
         layout.addLayout(workstation, 1)
+
+        layout.addWidget(self.create_status_bar())
 
     def create_reciever(self):
         panel = Panel("01/ Reciever")
@@ -183,6 +187,51 @@ class MainWindow(QMainWindow):
         d_cont.addStretch
 
         panel.main_layout.addLayout(d_cont)
+
+        label = QLabel("TUNING FREQUENCY")
+
+        self.freq_input = QDoubleSpinBox()
+        self.freq_input.setRange(0.6, 108.0)
+        self.freq_input.setDecimals(3)
+        self.freq_input.setSingleStep(0.001)
+        self.freq_input.setSuffix("MHz")
+        self.freq_input.setValue(91.4)
+
+        self.freq_input.setObjectName("FrequencyDisplay")
+
+        self.freq.changed.connect(self.freq_input.setValue)
+
+        self.freq_input.valueChanged.connect(self.freq.set_freq)
+
+        panel.main_layout.addWidget(label)
+        panel.main_layout.addWidget(self.freq_input)
+
+        fine_tune = QHBoxLayout()
+        decrease = QPushButton(" - 0.001 ")
+        increase = QPushButton(" + 0.001 ")
+
+        decrease.clicked.connect(
+            lambda: self.freq_input.setValue(self.freq_input.value() - 0.001)
+        )
+        increase.clicked.connect(
+            lambda: self.freq_input.setValue(self.freq_input.value() + 0.001)
+        )
+
+        fine_tune.addWidget(decrease)
+        fine_tune.addWidget(increase)
+
+        panel.main_layout.addLayout(fine_tune)
+        panel.main_layout.addSpacing(12)
+
+        title = QLabel("SIGNAL STRENGTH")
+
+        self.signal_meter = SignalMeter()
+        self.signal_val = QLabel("NO SIGNAL")
+        self.signal_val.setObjectName("Muted")
+
+        panel.main_layout.addWidget(title)
+        panel.main_layout.addWidget(self.signal_meter)
+        panel.main_layout.addWidget(self.signal_val)
 
         return panel
 
@@ -288,3 +337,6 @@ class MainWindow(QMainWindow):
         panel.main_layout.addWidget(self.archive_tabs, 1)
 
         return panel
+
+    def create_status_bar(self):
+        return QWidget()
