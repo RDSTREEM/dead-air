@@ -7,9 +7,13 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QFrame,
+    QTabWidget,
+    QListWidget,
+    QPushButton,
+    QTextEdit,
 )
 
-from dead_air.app.widgets import Panel, FrequencyDial
+from dead_air.app.widgets import Panel, FrequencyDial, Analyzer
 
 
 class MainWindow(QMainWindow):
@@ -156,26 +160,14 @@ class MainWindow(QMainWindow):
         # layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(self.create_header())
-        title = QLabel("DEAD AIR")
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        title.setStyleSheet("""
-            font-size: 36px;
-            font-weight: bold;
-            color: #9DBB91;
-            letter-spacing: 5px;
-            """)
 
-        subtitle = QLabel("BLACKWATER COASTAL RADIO STATION")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle.setStyleSheet("""
-            font-size: 11px;
-            color: #657A61;
-            letter-spacing: 3px;
-            """)
+        workstation = QHBoxLayout()
+        workstation.setSpacing(10)
 
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-        layout.addWidget(self.create_reciever())
+        workstation.addWidget(self.create_reciever(), 0)
+        workstation.addWidget(self.create_analyzer(), 1)
+
+        layout.addLayout(workstation, 1)
 
     def create_reciever(self):
         panel = Panel("01/ Reciever")
@@ -220,5 +212,79 @@ class MainWindow(QMainWindow):
         system = QLabel(
             "ARCHIVE SYSTEM: ONLINE"
         )  # since the puzzles starts as an archival thingi
+        system.setObjectName("StatusValue")
+
+        layout.addWidget(station)
+        layout.addSpacing(25)
+        layout.addWidget(system)
 
         return header
+
+    def create_analyzer(self):
+        panel = Panel("02 / Signal Analyzer")
+
+        self.analyzer_tabs = QTabWidget()
+        self.waveform = Analyzer("Waveform")
+        self.spectogram = Analyzer("Spectogram")
+        self.analyzer_tabs.addTab(self.waveform, "WAVEFORM")
+        self.analyzer_tabs.addTab(self.spectogram, "SPECTOGRAM")
+
+        panel.main_layout.addWidget(self.analyzer_tabs, 1)
+
+        info = QLabel(
+            "NO RECORDING LOADED" "        |    SAMPLE RATE: " "        |    DURATION: "
+        )
+        info.setObjectName("Muted")
+        panel.main_layout.addWidget(info)
+        return panel
+
+    def create_archive(self):
+        panel = Panel("03 / Archive")
+        panel.setMinimumWidth(260)
+        panel.setMaximumWidth(310)
+
+        self.archive_tabs = QTabWidget()
+
+        archive = QWidget()
+        a_layout = QVBoxLayout(archive)
+
+        desc = QLabel("AVIALABLE RECORDINGS AND DOCUMENTS")
+        desc.setObjectName("Muted")
+
+        self.list = QListWidget()
+        self.list.addItems(
+            [
+                "weather_01.wav",
+                "empty_channel.wav",
+                "frequency_allocation_register",
+                "analyzer_manual",
+            ]
+        )
+
+        a_layout.addWidget(desc)
+        a_layout.addWidget(self.list)
+
+        open_btn = QPushButton("OPEN SELECTED")
+        open_btn.setEnabled(False)
+
+        a_layout.addWidget(open_btn)
+
+        logbook = QWidget()
+        l_layout = QVBoxLayout(logbook)
+
+        l_desc = QLabel("INVESTIGATION NOTES")
+        l_desc.setObjectName("Muted")
+
+        self.log = QTextEdit()
+        self.log.setReadOnly(True)
+        self.log.setPlaceholderText("No discoveries recorded.")
+
+        l_layout.addWidget(l_desc)
+        l_layout.addWidget(self.log)
+
+        self.archive_tabs.addTab(archive, "ARCHIVE")
+        self.archive_tabs.addTab(logbook, "LOGBOOK")
+
+        panel.main_layout.addWidget(self.archive_tabs, 1)
+
+        return panel
