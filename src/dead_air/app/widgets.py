@@ -130,7 +130,7 @@ class FrequencyDial(QWidget):
             y2 = s * out
 
             painter.setPen(
-                QPen(QColor("#9D8891"), 1.8 if i % markings == 0 else 0.8)
+                QPen(QColor("#9DBB91"), 1.8 if i % markings == 0 else 0.8)
             )  # writing in this pascal or camel whatever it is called case in python is really annoying
             painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
 
@@ -144,7 +144,7 @@ class FrequencyDial(QWidget):
         painter.setBrush(QColor("#D59A50"))
         painter.drawEllipse(QRectF(-5, -5, 10, 10))
 
-        painter.setPen(QColor("#9D8891"))
+        painter.setPen(QColor("#9DBB91"))
 
         font = QFont("Consolas", 10)
         font.setBold(True)
@@ -164,3 +164,53 @@ class FrequencyDial(QWidget):
             Qt.AlignmentFlag.AlignCenter,
             "MHz",
         )
+
+
+class SignalMeter(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.level = 0.0
+        self.setMinimumHeight(25)
+
+    def set_level(self, level: float):
+        self.level = max(0.0, min(1.0, level))
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        segments = 24
+        gap = 3
+
+        seg_width = self.width() - gap * (segments - 1) / segments
+
+        active = int(self.level * segments)
+
+        for i in range(segments):
+            x = i * (seg_width + gap)
+
+            if i < active:
+                if i > 20:
+                    c = QColor("#D59A50")
+                else:
+                    c = QColor("#9DBB91")
+
+            else:
+                c = QColor("#283328")
+
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(c)
+
+            painter.drawRoundedRect(
+                QRectF(
+                    x,
+                    3,
+                    seg_width,
+                    self.height() - 6,
+                ),
+                2,
+                2,
+            )
