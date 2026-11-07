@@ -15,7 +15,7 @@
       "freq": 6.66,
       "tolerance": 0.5,
       "peak_strength": 0.65,
-      "audio_file": "empty_channel.wav",
+      "audio_file": "empty_channel_clue.wav",
       "desc": "An apparently empty channel with unusual interference."
     },
     {
