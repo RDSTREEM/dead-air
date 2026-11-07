@@ -55,6 +55,8 @@ class FrequencyDial(QWidget):
         self.changed.emit(self.freq)
 
     def _ratio(self):
+        if (self.maxi - self.freq) == 0:
+            return (self.freq - self.mini) / (self.maxi - self.freq - 0.0001)
         return (self.freq - self.mini) / (self.maxi - self.freq)
 
     def _set_from_pos(self, pos: QPointF):
@@ -165,6 +167,8 @@ class FrequencyDial(QWidget):
             "MHz",
         )
 
+        painter.end()
+
 
 class SignalMeter(QWidget):
 
@@ -214,6 +218,7 @@ class SignalMeter(QWidget):
                 2,
                 2,
             )
+        painter.end()
 
 
 class Analyzer(QWidget):
@@ -244,3 +249,4 @@ class Analyzer(QWidget):
         painter.setFont(QFont("Consolas", 10))
 
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No Signal Data")
+        painter.end()
