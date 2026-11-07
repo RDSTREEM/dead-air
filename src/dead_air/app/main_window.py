@@ -1,4 +1,5 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from pathlib import Path
 
@@ -158,6 +159,14 @@ class MainWindow(QMainWindow):
             Path(__file__).resolve().parents[1] / "data" / "signals.json"
         )  # ? im not sure if i should have this in the actual app or as a separate folder cuz i dont want people to be snoopin
         self.receiver = Receiver(SignalCatalogue.load(catalogue))
+
+        self.audio_dir = Path(__file__).resolve().parents[1] / "assets" / "audio"
+        self.audio_output = QAudioOutput(self)
+        self.audio_output.setVolume(0.7)
+        self.player = QMediaPlayer(self)
+        self.player.setAudioOutput(self.audio_output)
+
+        self.current_audio = None
         self.setup_ui()
 
     def setup_ui(self):
@@ -174,7 +183,7 @@ class MainWindow(QMainWindow):
         workstation = QHBoxLayout()
         workstation.setSpacing(10)
 
-        workstation.addWidget(self.create_reciever(), 0)
+        workstation.addWidget(self.create_receiver(), 0)
         workstation.addWidget(self.create_analyzer(), 1)
         workstation.addWidget(self.create_archive(), 0)
 
@@ -185,8 +194,8 @@ class MainWindow(QMainWindow):
         self.freq_input.valueChanged.connect(self.on_freq_change)
         self.on_freq_change(self.freq_input.value())
 
-    def create_reciever(self):
-        panel = Panel("01/ Reciever")
+    def create_receiver(self):
+        panel = Panel("01 / RECEIVER")
         panel.setMaximumWidth(260)
         panel.setMinimumWidth(290)
 
@@ -251,10 +260,13 @@ class MainWindow(QMainWindow):
         self.rec = QPushButton("REC")
         self.play = QPushButton("PLAY")
         self.stop = QPushButton("STOP")
+        self.play.clicked.connect(self.player.play)
+        self.stop.clicked.connect(self.player.stop)
+        self.rec.setEnabled(False)
 
-        for btn in (self.rec, self.play, self.stop):
-            btn.setEnabled(False)
-            transport.addWidget(btn)
+        transport.addWidget(self.rec)
+        transport.addWidget(self.play)
+        transport.addWidget(self.stop)
 
         panel.main_layout.addWidget(transport_title)
         panel.main_layout.addLayout(transport)
@@ -265,7 +277,10 @@ class MainWindow(QMainWindow):
         self.volume = QSlider(Qt.Orientation.Horizontal)
         self.volume.setRange(0, 100)
         self.volume.setValue(70)
-        self.volume.setEnabled(False)
+
+        self.volume.valueChanged.connect(
+            lambda val: self.audio_output.setVolume(val / 100)
+        )
 
         v_layout.addWidget(v_label)
         v_layout.addWidget(self.volume)
@@ -273,7 +288,7 @@ class MainWindow(QMainWindow):
         panel.main_layout.addSpacing(10)
         panel.main_layout.addLayout(v_layout)
 
-        engine = QLabel("AUDIO ENGINE: OFFLINE")
+        engine = QLabel("AUDIO ENGINE: ONLINE")
         engine.setObjectName("Muted")
 
         panel.main_layout.addStretch()
@@ -407,14 +422,21 @@ class MainWindow(QMainWindow):
         self.signal_meter.set_level(reception.strength)
 
         if reception.signal is None:
+            audio_file = self.audio_dir / "static_loop.wav"
             self.signal_val.setText("NO KNOWN CARRIER")
-
             self.signal_val.setStyleSheet("color: #657A61;")
-            self.status_msg.setText("RECIEVER // NO IDENTIFIED TRANSMISSION")
+            self.status_msg.setText("RECEIVER // NO IDENTIFIED TRANSMISSION")
+        else:
+            audio_file = self.audio_dir / reception.signal.audio_file
+            signal = reception.signal
+            self.signal_val.setText(signal.name.upper())
+            self.signal_val.setStyleSheet("color: #9DBB91;")
+            self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
 
-            return
+        p = str(audio_file.resolve())
 
-        signal = reception.signal
-        self.signal_val.setText(signal.name.upper())
-        self.signal_val.setStyleSheet("color: #9DBB91;")
-        self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
+        if p != self.current_audio and audio_file.exists():
+            self.player.stop()
+            self.player.setSource(QUrl.fromLocalFile(p))
+            self.player.play()
+            self.current_audio = p
