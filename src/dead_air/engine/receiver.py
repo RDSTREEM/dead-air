@@ -1,7 +1,7 @@
 from dead_air.engine.signal_catalogue import SignalCatalogue, Reception
 
 
-class Reciever:
+class Receiver:
 
     def __init__(self, catalogue: SignalCatalogue):
         self.catalogue = catalogue

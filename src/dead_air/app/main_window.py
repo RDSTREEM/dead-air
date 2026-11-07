@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 
 from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter
 from dead_air.engine.signal_catalogue import SignalCatalogue
-from dead_air.engine.reciever import Reciever
+from dead_air.engine.receiver import Receiver
 
 
 class MainWindow(QMainWindow):
@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
         catalogue = (
             Path(__file__).resolve().parents[1] / "data" / "signals.json"
         )  # ? im not sure if i should have this in the actual app or as a separate folder cuz i dont want people to be snoopin
-        self.reciever = Reciever(SignalCatalogue.load(catalogue))
+        self.receiver = Receiver(SignalCatalogue.load(catalogue))
         self.setup_ui()
 
     def setup_ui(self):
@@ -403,7 +403,7 @@ class MainWindow(QMainWindow):
         return bar
 
     def on_freq_change(self, freq: float):
-        reception = self.reciever.tune(freq)
+        reception = self.receiver.tune(freq)
         self.signal_meter.set_level(reception.strength)
 
         if reception.signal is None:
