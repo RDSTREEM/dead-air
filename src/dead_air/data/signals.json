@@ -4,7 +4,7 @@
       "id": "weather_broadcast",
       "name": "Coastal Weather Broadcast",
       "freq": 91.4,
-      "tolerance": 0.005,
+      "tolerance": 0.5,
       "peak_strength": 0.85,
       "audio_file": "weather_01.wav",
       "desc": "Routine coastal weather transmission."
@@ -13,7 +13,7 @@
       "id": "empty_channel",
       "name": "Unassigned Monitoring Channel",
       "freq": 6.66,
-      "tolerance": 0.005,
+      "tolerance": 0.5,
       "peak_strength": 0.65,
       "audio_file": "empty_channel.wav",
       "desc": "An apparently empty channel with unusual interference."
@@ -22,7 +22,7 @@
       "id": "first_contact",
       "name": "Auxiliary Monitoring Channel",
       "freq": 3.174,
-      "tolerance": 0.005,
+      "tolerance": 0.001,
       "peak_strength": 0.95,
       "audio_file": "first_contact.wav",
       "desc": "Unidentified transmission associated with BCR-17."

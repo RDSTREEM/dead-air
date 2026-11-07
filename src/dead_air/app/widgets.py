@@ -33,119 +33,165 @@ class Panel(QFrame):
 class FrequencyDial(QWidget):
     changed = Signal(float)
 
-    def __init__(self, minimum=0.5, maximum=108.0, parent=None):
+    MIN_FREQUENCY = 0.5
+    MAX_FREQUENCY = 108.0
+
+    START_ANGLE = 135.0
+    SWEEP_ANGLE = 270.0
+
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.mini = minimum
-        self.maxi = maximum
-        self.freq = 91.4  # so would have loved to document all this in a google doc like i did for project ayk buttt since it gotta be code, this is going to be the starting freq for now
+        self.freq = 91.400
+        self._dragging = False
 
-        self.setMinimumSize(190, 190)
-        self.setMaximumSize(260, 260)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setMinimumSize(180, 180)
+        self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
-    def set_freq(self, freq: float):
-        freq = max(self.mini, min(self.maxi, freq))
+    @property
+    def frequency(self):
+        return self.freq
 
-        if abs(freq - self.freq) < 0.0001:
-            return  # no point in changing if it is a small change plus to be radio like i want it to be 4 digit accurate
+    def _ratio(self):
+        return (self.freq - self.MIN_FREQUENCY) / (
+            self.MAX_FREQUENCY - self.MIN_FREQUENCY
+        )
 
-        self.freq = freq
+    def set_freq(self, frequency: float):
+        frequency = max(self.MIN_FREQUENCY, min(self.MAX_FREQUENCY, frequency))
+
+        if abs(frequency - self.freq) < 0.000001:
+            return
+
+        self.freq = frequency
         self.update()
         self.changed.emit(self.freq)
 
-    def _ratio(self):
-        if (self.maxi - self.freq) == 0:
-            return (self.freq - self.mini) / (self.maxi - self.freq - 0.0001)
-        return (self.freq - self.mini) / (self.maxi - self.freq)
+    def _set_from_ratio(self, ratio: float):
+        ratio = max(0.0, min(1.0, ratio))
 
-    def _set_from_pos(self, pos: QPointF):
-        center = QPointF(
-            self.width() / 2, self.height() / 2
-        )  # just remembered qt uses functions for width and height, whyyy
+        frequency = self.MIN_FREQUENCY + ratio * (
+            self.MAX_FREQUENCY - self.MIN_FREQUENCY
+        )
 
-        dx = pos.x() - center.x()
-        dy = pos.y() - center.y()
+        self.set_freq(frequency)
 
-        angle = math.degrees(math.atan2(dy, dx))
+    def _pointer_ratio(self, position):
+        x = position.x() - self.width() / 2
+        y = position.y() - self.height() / 2
 
-        if angle < 135:
-            angle += 360
+        angle = math.degrees(math.atan2(y, x)) % 360
 
-        angle = max(135, min(405, angle))
+        # The dial has a 90-degree gap at the bottom.
+        # Angles between 45 and 135 are clamped
+        # to the nearest endpoint.
+        if 45 < angle < 135:
+            return 1.0 if angle < 90 else 0.0
 
-        ratio = (angle - 135) / 270
+        if angle >= 135:
+            ratio = (angle - 135) / 270
+        else:
+            ratio = (angle + 225) / 270
 
-        freq = self.mini + ratio * (self.maxi - self.mini)
+        return max(0.0, min(1.0, ratio))
 
-        self.set_freq(round(freq, 3))
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self._set_from_pos(event.position())
+            self._dragging = True
+            self.setFocus()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            self._set_from_pos(event.position())
+            self._set_from_ratio(self._pointer_ratio(event.position()))
 
-    def wheelEvent(self, event: QWheelEvent) -> None:
-        delta = event.angleDelta().y()
-        step = 0.1 if delta > 0 else -0.1
-        self.set_freq(round(self.freq + step, 3))
+            event.accept()
+            return
 
-    def paintEvent(self, event: QPaintEvent) -> None:  # i miss flutter auto compelete
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._dragging:
+            self._set_from_ratio(self._pointer_ratio(event.position()))
+
+            event.accept()
+            return
+
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = False
+            event.accept()
+            return
+
+        super().mouseReleaseEvent(event)
+
+    def wheelEvent(self, event):
+        steps = event.angleDelta().y() / 120
+
+        self.set_freq(self.freq + steps * 0.001)
+
+        event.accept()
+
+    def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(
-            QPainter.RenderHint.Antialiasing
-        )  # im not sure if this one would look good with aliasing tho may change it to give a better radio feel
+
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
         side = min(self.width(), self.height())
 
         painter.translate(self.width() / 2, self.height() / 2)
 
-        scale = side / 220
-        painter.scale(scale, scale)
+        painter.scale(side / 220, side / 220)
 
-        # this is going to be horrible i tell u
+        # Outer casing
         painter.setPen(QPen(QColor("#465247"), 3))
         painter.setBrush(QColor("#171D19"))
+
         painter.drawEllipse(QRectF(-100, -100, 200, 200))
+
+        # Inner face
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor("#08100D"))
+
         painter.drawEllipse(QRectF(-88, -88, 176, 176))
 
-        markings = 5  # very dumb name but like the marking per each thingi, u know how a ruler is
-
+        # Frequency markings
         for i in range(31):
-            r = i / 30
-            angle = math.radians(135 + r * 270)
+            ratio = i / 30
 
-            out = 83
-            inner = 73 if i % markings == 0 else 78
+            angle = math.radians(self.START_ANGLE + ratio * self.SWEEP_ANGLE)
 
-            c = math.cos(angle)
-            s = math.sin(angle)
+            major = i % 5 == 0
 
-            x1 = c * inner  # ?finally trig coming in handy???
-            y1 = s * inner
+            inner = 72 if major else 78
+            outer = 83
 
-            x2 = c * out
-            y2 = s * out
+            x1 = math.cos(angle) * inner
+            y1 = math.sin(angle) * inner
 
-            painter.setPen(
-                QPen(QColor("#9DBB91"), 1.8 if i % markings == 0 else 0.8)
-            )  # writing in this pascal or camel whatever it is called case in python is really annoying
+            x2 = math.cos(angle) * outer
+            y2 = math.sin(angle) * outer
+
+            painter.setPen(QPen(QColor("#9DBB91"), 1.8 if major else 0.8))
+
             painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
 
-        angle = math.radians(135 + self._ratio() * 270)
+        # Needle
+        angle = math.radians(self.START_ANGLE + self._ratio() * self.SWEEP_ANGLE)
+
         painter.setPen(QPen(QColor("#D59A50"), 2.5))
+
         painter.drawLine(
             QPointF(0, 0), QPointF(math.cos(angle) * 67, math.sin(angle) * 67)
         )
 
+        # Needle centre
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor("#D59A50"))
+
         painter.drawEllipse(QRectF(-5, -5, 10, 10))
 
+        # Frequency display
         painter.setPen(QColor("#9DBB91"))
 
         font = QFont("Consolas", 10)
@@ -153,21 +199,13 @@ class FrequencyDial(QWidget):
         painter.setFont(font)
 
         painter.drawText(
-            QRectF(-65, 28, 130, 25),
-            Qt.AlignmentFlag.AlignCenter,
-            f"{self.freq:.3f}",
+            QRectF(-65, 28, 130, 25), Qt.AlignmentFlag.AlignCenter, f"{self.freq:.3f}"
         )
 
         painter.setPen(QColor("#657A61"))
         painter.setFont(QFont("Consolas", 7))
 
-        painter.drawText(
-            QRectF(-65, 48, 130, 15),
-            Qt.AlignmentFlag.AlignCenter,
-            "MHz",
-        )
-
-        painter.end()
+        painter.drawText(QRectF(-65, 48, 130, 15), Qt.AlignmentFlag.AlignCenter, "MHz")
 
 
 class SignalMeter(QWidget):
