@@ -1,5 +1,7 @@
 from PySide6.QtCore import Qt
 
+from pathlib import Path
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -16,6 +18,8 @@ from PySide6.QtWidgets import (
 )
 
 from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter
+from dead_air.engine.signal_catalogue import SignalCatalogue
+from dead_air.engine.reciever import Reciever
 
 
 class MainWindow(QMainWindow):
@@ -150,6 +154,10 @@ class MainWindow(QMainWindow):
             }
             """)
 
+        catalogue = (
+            Path(__file__).resolve().parents[1] / "data" / "signals.json"
+        )  # ? im not sure if i should have this in the actual app or as a separate folder cuz i dont want people to be snoopin
+        self.reciever = Reciever(SignalCatalogue.load(catalogue))
         self.setup_ui()
 
     def setup_ui(self):
@@ -173,6 +181,9 @@ class MainWindow(QMainWindow):
         layout.addLayout(workstation, 1)
 
         layout.addWidget(self.create_status_bar())
+
+        self.freq_input.valueChanged.connect(self.on_freq_change)
+        self.on_freq_change(self.freq_input.value())
 
     def create_reciever(self):
         panel = Panel("01/ Reciever")
@@ -390,3 +401,20 @@ class MainWindow(QMainWindow):
         layout.addWidget(right)
 
         return bar
+
+    def on_freq_change(self, freq: float):
+        reception = self.reciever.tune(freq)
+        self.signal_meter.set_level(reception.strength)
+
+        if reception.signal is None:
+            self.signal_val.setText("NO KNOWN CARRIER")
+
+            self.signal_val.setStyleSheet("color: #657A61;")
+            self.status_msg.setText("RECIEVER // NO IDENTIFIED TRANSMISSION")
+
+            return
+
+        signal = reception.signal
+        self.signal_val.setText(signal.name.upper())
+        self.signal_val.setStyleSheet("color: #9DBB91;")
+        self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
