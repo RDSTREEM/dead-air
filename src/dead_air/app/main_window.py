@@ -374,4 +374,19 @@ class MainWindow(QMainWindow):
         return panel
 
     def create_status_bar(self):
-        return QWidget()
+        bar = QFrame()
+        bar.setObjectName("Panel")
+
+        layout = QHBoxLayout(bar)
+        layout.setContentsMargins(12, 6, 12, 6)
+
+        self.status_msg = QLabel("SYSTEM // AWAITING OPERATOR INPUT")
+        self.status_msg.setObjectName("Muted")
+
+        right = QLabel("BCR-17  |   ARCHIVE TERMINAL 01")
+        right.setObjectName("Muted")
+        layout.addWidget(self.status_msg)
+        layout.addStretch()
+        layout.addWidget(right)
+
+        return bar
