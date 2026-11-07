@@ -165,6 +165,7 @@ class MainWindow(QMainWindow):
         self.audio_output.setVolume(0.7)
         self.player = QMediaPlayer(self)
         self.player.setAudioOutput(self.audio_output)
+        self.player.setLoops(QMediaPlayer.Loops.Infinite)
 
         self.current_audio = None
         self.setup_ui()
