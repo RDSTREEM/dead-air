@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QDoubleSpinBox,
+    QSlider,
 )
 
 from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter
@@ -232,6 +233,40 @@ class MainWindow(QMainWindow):
         panel.main_layout.addWidget(title)
         panel.main_layout.addWidget(self.signal_meter)
         panel.main_layout.addWidget(self.signal_val)
+
+        panel.main_layout.addSpacing(10)
+        transport_title = QLabel("TRANSPORT")
+        transport = QHBoxLayout()
+        self.rec = QPushButton("REC")
+        self.play = QPushButton("PLAY")
+        self.stop = QPushButton("STOP")
+
+        for btn in (self.rec, self.play, self.stop):
+            btn.setEnabled(False)
+            transport.addWidget(btn)
+
+        panel.main_layout.addWidget(transport_title)
+        panel.main_layout.addLayout(transport)
+
+        v_layout = QHBoxLayout()
+        v_label = QLabel("VOLUME")
+
+        self.volume = QSlider(Qt.Orientation.Horizontal)
+        self.volume.setRange(0, 100)
+        self.volume.setValue(70)
+        self.volume.setEnabled(False)
+
+        v_layout.addWidget(v_label)
+        v_layout.addWidget(self.volume)
+
+        panel.main_layout.addSpacing(10)
+        panel.main_layout.addLayout(v_layout)
+
+        engine = QLabel("AUDIO ENGINE: OFFLINE")
+        engine.setObjectName("Muted")
+
+        panel.main_layout.addStretch()
+        panel.main_layout.addWidget(engine)
 
         return panel
 
