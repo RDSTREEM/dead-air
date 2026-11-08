@@ -1,5 +1,10 @@
 import math
 
+import numpy as np
+import soundfile as sf
+
+from scipy.signal import spectrogram
+
 from PySide6.QtCore import Qt, Signal, QRectF, QPointF
 from PySide6.QtGui import (
     QMouseEvent,
@@ -10,6 +15,7 @@ from PySide6.QtGui import (
     QColor,
     QFont,
     QWheelEvent,
+    QImage,
 )
 from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QLabel
 
@@ -266,25 +272,64 @@ class Analyzer(QWidget):
         super().__init__(parent)
 
         self.name = name
+        self.image = None
+        self.duration = 0
+        self.max_freq = 5000  # i do wonder tho if i didnt know the max freq for the audio what i would set here
         self.setMinimumSize(300, 220)
+
+    def load(self, path):
+        # confusionnnnn on what i am doing but still
+        audio, samp = sf.read(path)
+
+        if audio.ndim == 2:  # if it is sterio to average em out i think
+            audio = audio.mean()
+
+        freq, times, vals = spectrogram(
+            audio,
+            fs=samp,
+            nperseg=2 * 11,
+            noverlap=512,
+        )
+
+        # from my understanding this converts it into decibals, if i was using the short tiem forier (spellinggg) transform i would have needed to do 20 * the log cuz it is not squared.
+        e = 1e-10
+        deci = 10 * np.log10(vals + e)
+        deci = np.flipud(
+            deci
+        )  # because of how numpy processes arrays, we need to flip it to make 0 at the bottom
+
+        min_val = deci.min()
+        max_val = deci.max()
+
+        # to make it into an image, the values must be normalized btn 0 and 255
+        if max_val - min_val > 0:
+            n = 255 * (deci - min_val) / (max_val - min_val)
+        else:
+            n = np.zeros_like(deci)
+
+        img = n.astype(np.uint8)
+
+        h, w = img.shape
+        image = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)
+        self.image = image
+        self.update()
 
     def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
 
         painter.fillRect(self.rect(), QColor("#080D0A"))
 
-        painter.setPen(QPen(QColor("#1D2B20"), 1))
+        if self.image is None:
+            painter.setPen(QColor("#657A61"))
+            painter.setFont(QFont("Consolas", 10))
+            painter.drawText(
+                self.rect(), Qt.AlignmentFlag.AlignCenter, "No Signal Analysis Loaded"
+            )
+            painter.end()
+            return
 
-        space = 30
+        l, t, r, b = 48, 15, 15, 32
+        area = QRectF(l, t, self.width() - l - r, self.height() - t - b)
+        painter.drawImage(area, self.image)
 
-        for x in range(0, self.width(), space):
-            painter.drawLine(x, 0, x, self.height())
-
-        for y in range(0, self.width(), space):
-            painter.drawLine(0, y, self.width(), y)
-
-        painter.setPen(QColor("#657A61"))
-        painter.setFont(QFont("Consolas", 10))
-
-        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No Signal Data")
         painter.end()
