@@ -20,6 +20,8 @@ class ArchiveManager:
         else:
             self.data = {"recordings": [], "logs": []}
 
+        self.seed_casefile()
+
     def save(self):
         self.dir.mkdir(parents=True, exist_ok=True)
 
