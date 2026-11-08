@@ -408,7 +408,7 @@ class Archive(QWidget):
 
         entry = entries[i]
 
-        self.details.text = (
+        self.details.setText(
             f"<h3> {entry['name']} </h3>"
             f"<p>Frequency: {entry['freq']:.3f} MHz </p>"
             f"<p>Recorded: {entry['recorded_at']} MHz </p>"
