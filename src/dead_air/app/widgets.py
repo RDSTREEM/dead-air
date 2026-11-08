@@ -5,19 +5,26 @@ import soundfile as sf
 
 from scipy.signal import spectrogram
 
-from PySide6.QtCore import Qt, Signal, QRectF, QPointF
+from PySide6.QtCore import Qt, Signal, QRectF, QPointF, QUrl
 from PySide6.QtGui import (
-    QMouseEvent,
     QPaintEvent,
     QPainter,
     QPen,
-    QBrush,
     QColor,
     QFont,
-    QWheelEvent,
     QImage,
 )
-from PySide6.QtWidgets import QFrame, QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import (
+    QFrame,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QTabWidget,
+    QListWidget,
+    QTextBrowser,
+    QHBoxLayout,
+    QPushButton,
+)
 
 
 class Panel(QFrame):
@@ -335,3 +342,111 @@ class Analyzer(QWidget):
         painter.drawImage(area, self.image)
 
         painter.end()
+
+
+class Archive(QWidget):
+    def __init__(self, mgr, player, parent=None):
+        super().__init__(parent)
+
+        self.mgr = mgr
+        self.player = player
+
+        self.tabs = QTabWidget()
+
+        self.list = QListWidget()
+        self.details = QTextBrowser()
+
+        self.logs = QListWidget()
+        self.log_details = QTextBrowser()
+
+        self.setup_ui()
+        self.refresh()
+
+    def setup_ui(self):
+        rec_tab = QWidget()
+        r_layout = QHBoxLayout(rec_tab)
+
+        left = QVBoxLayout()
+        self.play = QPushButton("PLAY SELECTED")
+        self.play.clicked.connect(self.play_selected)
+
+        left.addWidget(self.list)
+        left.addWidget(self.play)
+
+        r_layout.addLayout(left)
+        r_layout.addWidget(self.details)
+
+        self.list.currentRowChanged.connect(self.rec_details)
+
+        logs = QTabWidget()
+        l_layout = QHBoxLayout(logs)
+
+        l_layout.addWidget(self.logs)
+        l_layout.addWidget(self.log_details)
+
+        self.logs.currentRowChanged.connect(self.show_log_details)
+
+        self.tabs.addTab(rec_tab, "RECORDINGS")
+        self.tabs.addTab(logs, "LOGBOOK")
+
+    def refresh(self):
+        self.list.clear()
+        self.logs.clear()
+
+        for entry in self.mgr.data["recordings"]:
+            self.list.addItem(f"{entry['name']} // {entry['freq']:.3f} MHz")
+
+        for entry in self.mgr.data["logs"]:
+            self.logs.addItem(entry["title"])
+
+    def rec_details(self, i):
+        entries = self.mgr.data["recordings"]
+
+        if not 0 <= i < len(entries):
+            self.details.clear()
+            return
+
+        entry = entries[i]
+
+        self.details.text = (
+            f"<h3> {entry['name']} </h3>"
+            f"<p>Frequency: {entry['freq']:.3f} MHz </p>"
+            f"<p>Recorded: {entry['recorded_at']} MHz </p>"
+            f"<p>Frequency: {entry['freq']:.3f}</p>"
+            f"<p>File: {entry['file']:.3f}</p>"
+        )
+
+    def show_log_details(self, i):
+        entries = self.mgr.data["logs"]
+
+        if not 0 <= i < len(entries):
+            self.log_details.clear()
+            return
+
+        entry = entries[i]
+
+        self.log_details.setText(
+            f"<h3>{entry['title']}</h3>"
+            f"<p>{entry['body']}</p>"
+            f"<small>{entry['created_at']}</small>"
+        )
+
+    def play_selected(self):
+        i = self.list.currentRow()
+        entries = self.mgr.data["recordings"]
+
+        if not 0 <= i < len(entries):
+            return
+
+        entry = entries[i]
+
+        path = self.mgr.rec_dir / entry["file"]
+
+        if path.exists():
+            self.player.stop()
+            self.player.setSource(QUrl.fromLocalFile(str(path.resolve())))
+            self.player.play()
+
+    def add_log(self, title, body):
+        self.mgr.add_log(title, body)
+        self.refresh()
