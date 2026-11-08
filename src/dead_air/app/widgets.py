@@ -378,7 +378,7 @@ class Archive(QWidget):
 
         self.list.currentRowChanged.connect(self.rec_details)
 
-        logs = QTabWidget()
+        logs = QWidget()
         l_layout = QHBoxLayout(logs)
 
         l_layout.addWidget(self.logs)
@@ -389,6 +389,9 @@ class Archive(QWidget):
         self.tabs.addTab(rec_tab, "RECORDINGS")
         self.tabs.addTab(logs, "LOGBOOK")
 
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.tabs)
+
     def refresh(self):
         self.list.clear()
         self.logs.clear()
@@ -398,6 +401,8 @@ class Archive(QWidget):
 
         for entry in self.mgr.data["logs"]:
             self.logs.addItem(entry["title"])
+
+        self.update()
 
     def rec_details(self, i):
         entries = self.mgr.data["recordings"]

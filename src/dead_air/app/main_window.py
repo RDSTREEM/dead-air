@@ -19,9 +19,10 @@ from PySide6.QtWidgets import (
     QSlider,
 )
 
-from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter
+from dead_air.app.widgets import Panel, FrequencyDial, Analyzer, SignalMeter, Archive
 from dead_air.engine.signal_catalogue import SignalCatalogue
 from dead_air.engine.receiver import Receiver
+from dead_air.engine.archive import ArchiveManager
 
 
 class MainWindow(QMainWindow):
@@ -168,6 +169,9 @@ class MainWindow(QMainWindow):
         self.player.setAudioOutput(self.audio_output)
         self.player.setLoops(QMediaPlayer.Loops.Infinite)
 
+        self.mgr = ArchiveManager(self.audio_dir.parent / "archive")
+        self.archive = Archive(self.mgr, self.player)
+
         self.current_audio = None
         self.setup_ui()
 
@@ -264,8 +268,10 @@ class MainWindow(QMainWindow):
         self.stop = QPushButton("STOP")
         self.play.clicked.connect(self.player.play)
         self.stop.clicked.connect(self.player.stop)
-        self.rec.setEnabled(False)
 
+        self.rec.setCheckable(True)
+
+        self.rec.toggled.connect(self.on_rec)
         transport.addWidget(self.rec)
         transport.addWidget(self.play)
         transport.addWidget(self.stop)
@@ -359,52 +365,8 @@ class MainWindow(QMainWindow):
 
     def create_archive(self):
         panel = Panel("03 / Archive")
-        panel.setMinimumWidth(260)
-        panel.setMaximumWidth(310)
 
-        self.archive_tabs = QTabWidget()
-
-        archive = QWidget()
-        a_layout = QVBoxLayout(archive)
-
-        desc = QLabel("AVIALABLE RECORDINGS AND DOCUMENTS")
-        desc.setObjectName("Muted")
-
-        self.list = QListWidget()
-        self.list.addItems(
-            [
-                "weather_01.wav",
-                "empty_channel.wav",
-                "frequency_allocation_register",
-                "analyzer_manual",
-            ]
-        )
-
-        a_layout.addWidget(desc)
-        a_layout.addWidget(self.list)
-
-        open_btn = QPushButton("OPEN SELECTED")
-        open_btn.setEnabled(False)
-
-        a_layout.addWidget(open_btn)
-
-        logbook = QWidget()
-        l_layout = QVBoxLayout(logbook)
-
-        l_desc = QLabel("INVESTIGATION NOTES")
-        l_desc.setObjectName("Muted")
-
-        self.log = QTextEdit()
-        self.log.setReadOnly(True)
-        self.log.setPlaceholderText("No discoveries recorded.")
-
-        l_layout.addWidget(l_desc)
-        l_layout.addWidget(self.log)
-
-        self.archive_tabs.addTab(archive, "ARCHIVE")
-        self.archive_tabs.addTab(logbook, "LOGBOOK")
-
-        panel.main_layout.addWidget(self.archive_tabs, 1)
+        panel.main_layout.addWidget(self.archive)
 
         return panel
 
@@ -440,12 +402,12 @@ class MainWindow(QMainWindow):
             signal = reception.signal
             if signal.id == "empty_channel":
                 self.spectogram.load(audio_file)
+            self.curr_name = signal.name
             self.signal_val.setText(signal.name.upper())
             self.signal_val.setStyleSheet("color: #9DBB91;")
             self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
 
         p = str(audio_file.resolve())
-        print(p)
 
         if p != self.current_audio and audio_file.exists():
             self.player.stop()
@@ -463,3 +425,39 @@ class MainWindow(QMainWindow):
 
         else:
             self.status_msg.setText("DECODE FAILED // recheck the spectogram")
+            self.archive.add_log(
+                "FREQUENCY IDENTIFIED",
+                "Spectrogram analysis revealed the digits 3174. "
+                "The frequency register identifies the signal "
+                "as 3.174 MHz.",
+            )
+
+    def on_rec(self, rec):
+        if rec:
+            if not self.current_audio:
+                self.rec.setChecked(False)
+                return
+
+            self.src = Path(self.current_audio)
+
+            if not self.src.exists():
+                self.rec.setChecked(False)
+                return
+
+            self.rec.setText("STOP REC")
+            self.status_msg.setText("RECORDING TRANSMISSION")
+
+        else:
+            if not hasattr(self, "src"):
+                return
+
+            if not self.src.exists():
+                return
+
+            self.mgr.add_rec(
+                self.src, self.freq_input.value(), getattr(self, "curr_name", "UNKOWN")
+            )
+            self.archive.refresh()
+
+            self.rec.setText("REC")
+            self.status_msg.setText("RECORDING SAVED")

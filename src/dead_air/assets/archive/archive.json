@@ -1,0 +1,12 @@
+{
+    "recordings": [
+        {
+            "id": "f1268d71",
+            "name": "Coastal Weather Broadcast",
+            "freq": 91.4,
+            "file": "f1268d71.wav",
+            "recorded_at": "2026-11-08T16:08:39"
+        }
+    ],
+    "logs": []
+}
