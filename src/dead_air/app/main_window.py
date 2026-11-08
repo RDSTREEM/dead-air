@@ -11,9 +11,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFrame,
     QTabWidget,
-    QListWidget,
     QPushButton,
-    QTextEdit,
     QLineEdit,
     QDoubleSpinBox,
     QSlider,
@@ -171,6 +169,13 @@ class MainWindow(QMainWindow):
 
         self.mgr = ArchiveManager(self.audio_dir.parent / "archive")
         self.archive = Archive(self.mgr, self.player)
+        self.archive.tools.connect(self.reveal_spectogram)
+
+        self.playback = False
+        self.analysis = None
+
+        self.archive.playback.connect(self.begin_analysis)
+        self.player.playbackStateChanged.connect(self.update_analysis)
 
         self.current_audio = None
         self.setup_ui()
@@ -339,7 +344,7 @@ class MainWindow(QMainWindow):
         return header
 
     def create_analyzer(self):
-        panel = Panel("02 / Signal Analyzer")
+        self.panel = Panel("02 / Signal Analyzer")
 
         self.analyzer_tabs = QTabWidget()
         # self.waveform = Analyzer("Waveform")
@@ -347,21 +352,23 @@ class MainWindow(QMainWindow):
         # self.analyzer_tabs.addTab(self.waveform, "WAVEFORM")
         self.analyzer_tabs.addTab(self.spectogram, "SPECTOGRAM")
 
-        panel.main_layout.addWidget(self.analyzer_tabs, 1)
-
-        info = QLabel(
-            "NO RECORDING LOADED" "        |    SAMPLE RATE: " "        |    DURATION: "
-        )
-        info.setObjectName("Muted")
-        panel.main_layout.addWidget(info)
-
+        self.panel.main_layout.addWidget(self.analyzer_tabs, 1)
         self.input = QLineEdit()
         self.input.setPlaceholderText("ENTER FREQ TEXT: ")
         self.submit = QPushButton("Decode")
         self.submit.clicked.connect(self.check_answer1)
-        panel.main_layout.addWidget(self.input)
-        panel.main_layout.addWidget(self.submit)
-        return panel
+        self.panel.main_layout.addWidget(self.input)
+        self.panel.main_layout.addWidget(self.submit)
+        if "spectogram" not in self.mgr.data["discovered_tools"]:
+            self.panel.hide()
+        return self.panel
+
+        """         info = QLabel(
+                    "NO RECORDING LOADED" "        |    SAMPLE RATE: " "        |    DURATION: "
+                )
+                info.setObjectName("Muted")
+            self.panel.main_layout.addWidget(info)
+        """
 
     def create_archive(self):
         panel = Panel("03 / Archive")
@@ -406,6 +413,9 @@ class MainWindow(QMainWindow):
             self.signal_val.setText(signal.name.upper())
             self.signal_val.setStyleSheet("color: #9DBB91;")
             self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
+            self.analysis = None
+            self.playback = False
+            self.spectogram.clear()
 
         p = str(audio_file.resolve())
 
@@ -461,3 +471,29 @@ class MainWindow(QMainWindow):
 
             self.rec.setText("REC")
             self.status_msg.setText("RECORDING SAVED")
+
+    def reveal_spectogram(self):
+        self.analyzer_tabs.show()
+        self.archive.add_log(
+            "EQUIPMENT RECOVERED",
+            "The spectrum analyzer has been recovered and connected to the station",
+        )
+
+    def begin_analysis(self, path):
+        self.playback = True  # there are only two hard things in programming, naming things and cache invalidation or however the saying goes
+        self.analysis = Path(path)
+
+    def update_analysis(self, state):
+        if not self.playback:
+            return
+
+        if (
+            state == QMediaPlayer.PlaybackState.PlayingState
+            and self.analysis is not None
+        ):
+            if "spectogram" in self.mgr.data["discovered_tools"]:
+                self.spectogram.load(str(self.analysis))
+
+        else:
+            self.spectogram.clear()
+            self.analysis = None

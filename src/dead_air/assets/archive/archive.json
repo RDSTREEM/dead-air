@@ -8,5 +8,28 @@
             "recorded_at": "2026-11-08T16:08:39"
         }
     ],
-    "logs": []
+    "logs": [
+        {
+            "title": "CASE 01 // Assignment",
+            "body": "BLACKWATER MUNICIPAL EMERGENCY AUTHORITY\n\nYou have been contracted to audit station BCR-17 following several missed operator check-ins.\n\nThe station's automated broadcasts continue to appear in the monitoring network. However, recent archive records contain unexplained discrepancies.\n\nYour assignment is to reconstruct the station's final transmissions, preserve relevant recordings, and identify the source of the irregularities.\n\nOperator: Elias Venn\nStation: BCR-17\nLocation: Blackwater Coastal District\nCase status: OPEN",
+            "created_at": "2026-11-08T17:36:06"
+        },
+        {
+            "title": "CASE 01 // Station handover",
+            "body": "BCR-17 operates as a coastal weather and emergency broadcast station.\n\nRoutine broadcasts include weather reports, navigation notices, and scheduled time signals.\n\nThe station's archive is incomplete. Preserve every relevant transmission before drawing conclusions.",
+            "created_at": "2026-11-08T17:36:06"
+        },
+        {
+            "title": "EQUIPMENT INVENTORY // Cabinet 4B",
+            "body": "An older spectrum analyzer was removed from the main receiver console during the last equipment replacement.\n\nInventory indicates that the analyzer and its service documentation remain in cabinet 4B in the signal room.\n\nThe equipment has not been checked out.",
+            "unlock_id": "spectrum_analyzer",
+            "created_at": "2026-11-08T17:36:06"
+        },
+        {
+            "title": "CASE 02 // Preliminary instruction",
+            "body": "The archive timestamps must be checked against an independent reference signal.\n\nDo not assume that the station's clock and the reference clock are synchronized.",
+            "created_at": "2026-11-08T17:36:06"
+        }
+    ],
+    "discovered_tools": []
 }

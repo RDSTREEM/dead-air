@@ -119,12 +119,12 @@ class ArchiveManager:
             },
         ]
 
-        existing = {note["title"] for note in self.data["notes"]}
+        existing = {note["title"] for note in self.data["logs"]}
 
         for note in initial_notes:
             if note["title"] not in existing:
                 note["created_at"] = datetime.now().isoformat(timespec="seconds")
-                self.data["notes"].append(note)
+                self.data["logs"].append(note)
 
         self.data.setdefault("discovered_tools", [])
 

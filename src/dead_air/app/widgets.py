@@ -343,8 +343,16 @@ class Analyzer(QWidget):
 
         painter.end()
 
+    def clear(self):
+        self.image = None
+        self.duration = 0
+        self.update()
+
 
 class Archive(QWidget):
+    tools = Signal()
+    playback = Signal(str)
+
     def __init__(self, mgr, player, parent=None):
         super().__init__(parent)
 
@@ -360,6 +368,10 @@ class Archive(QWidget):
 
         self.logs = QListWidget()
         self.log_details = QTextBrowser()
+
+        self.btn = QPushButton("INSPECT ATTACHED INVENTORY")
+        self.btn.hide()
+        self.btn.clicked.connect(self.inspect)
 
         self.setup_ui()
         self.refresh()
@@ -385,6 +397,7 @@ class Archive(QWidget):
 
         l_layout.addWidget(self.logs)
         l_layout.addWidget(self.log_details)
+        l_layout.addWidget(self.btn)
 
         self.logs.currentRowChanged.connect(self.show_log_details)
 
@@ -438,6 +451,8 @@ class Archive(QWidget):
             f"<small>{entry['created_at']}</small>"
         )
 
+        self.btn.setVisible(entry.get("unlock_id") == "spectogram")
+
     def play_selected(self):
         i = self.list.currentRow()
         entries = self.mgr.data["recordings"]
@@ -450,6 +465,7 @@ class Archive(QWidget):
         path = self.mgr.rec_dir / entry["file"]
 
         if path.exists():
+            self.playback.emit(str(path))
             self.player.stop()
             self.player.setSource(QUrl.fromLocalFile(str(path.resolve())))
             self.player.play()
@@ -457,3 +473,24 @@ class Archive(QWidget):
     def add_log(self, title, body):
         self.mgr.add_log(title, body)
         self.refresh()
+
+    def inspect(self):
+        i = self.logs.currentRow()
+        logs = self.mgr.data["logs"]
+
+        if not 0 <= i < len(logs):
+            return
+
+        log = logs[i]
+
+        if log.get("unlock_id") != "spectogram":
+            return
+
+        if "spectogram" not in self.mgr.data["discovered_tools"]:
+            self.mgr.data["discovered_tools"].append("spectogram")
+            self.mgr.save()
+            self.tools.emit()
+
+            self.log_details.append(
+                "\n\nATTACHMENT RECOVERED:\nPortable spectrum analyzer found."
+            )
