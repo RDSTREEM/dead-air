@@ -106,7 +106,7 @@ class ArchiveManager:
                     "in the signal room.\n\n"
                     "The equipment has not been checked out."
                 ),
-                "unlock_id": "spectrum_analyzer",
+                "unlock_id": "spectogram",
             },
             {
                 "title": "CASE 02 // Preliminary instruction",

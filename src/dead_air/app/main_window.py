@@ -396,6 +396,7 @@ class MainWindow(QMainWindow):
         return bar
 
     def on_freq_change(self, freq: float):
+
         reception = self.receiver.tune(freq)
         self.signal_meter.set_level(reception.strength)
 
