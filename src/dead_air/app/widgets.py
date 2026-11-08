@@ -348,6 +348,8 @@ class Archive(QWidget):
     def __init__(self, mgr, player, parent=None):
         super().__init__(parent)
 
+        self.setMinimumSize(260, 300)
+
         self.mgr = mgr
         self.player = player
 
