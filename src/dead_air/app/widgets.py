@@ -432,8 +432,7 @@ class Archive(QWidget):
             f"<h3> {entry['name']} </h3>"
             f"<p>Frequency: {entry['freq']:.3f} MHz </p>"
             f"<p>Recorded: {entry['recorded_at']} MHz </p>"
-            f"<p>Frequency: {entry['freq']:.3f}</p>"
-            f"<p>File: {entry['file']:.3f}</p>"
+            f"<p>File: {entry['file']}</p>"
         )
 
     def show_log_details(self, i):

@@ -474,7 +474,7 @@ class MainWindow(QMainWindow):
             self.status_msg.setText("RECORDING SAVED")
 
     def reveal_spectogram(self):
-        self.analyzer_tabs.show()
+        self.panel.show()
         self.archive.add_log(
             "EQUIPMENT RECOVERED",
             "The spectrum analyzer has been recovered and connected to the station",
@@ -493,6 +493,7 @@ class MainWindow(QMainWindow):
             and self.analysis is not None
         ):
             if "spectogram" in self.mgr.data["discovered_tools"]:
+                print("hi")
                 self.spectogram.load(str(self.analysis))
 
         else:
