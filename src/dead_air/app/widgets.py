@@ -279,15 +279,16 @@ class Analyzer(QWidget):
 
     def load(self, path):
         # confusionnnnn on what i am doing but still
+        print(path)
         audio, samp = sf.read(path)
 
         if audio.ndim == 2:  # if it is sterio to average em out i think
-            audio = audio.mean()
+            audio = audio.mean(axis=1)
 
         freq, times, vals = spectrogram(
             audio,
             fs=samp,
-            nperseg=2 * 11,
+            nperseg=1024,
             noverlap=512,
         )
 
@@ -308,10 +309,11 @@ class Analyzer(QWidget):
             n = np.zeros_like(deci)
 
         img = n.astype(np.uint8)
+        img = np.ascontiguousarray(img)
 
         h, w = img.shape
         image = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)
-        self.image = image
+        self.image = image.copy()
         self.update()
 
     def paintEvent(self, event: QPaintEvent) -> None:

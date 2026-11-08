@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QPushButton,
     QTextEdit,
+    QLineEdit,
     QDoubleSpinBox,
     QSlider,
 )
@@ -335,9 +336,9 @@ class MainWindow(QMainWindow):
         panel = Panel("02 / Signal Analyzer")
 
         self.analyzer_tabs = QTabWidget()
-        self.waveform = Analyzer("Waveform")
+        # self.waveform = Analyzer("Waveform")
         self.spectogram = Analyzer("Spectogram")
-        self.analyzer_tabs.addTab(self.waveform, "WAVEFORM")
+        # self.analyzer_tabs.addTab(self.waveform, "WAVEFORM")
         self.analyzer_tabs.addTab(self.spectogram, "SPECTOGRAM")
 
         panel.main_layout.addWidget(self.analyzer_tabs, 1)
@@ -347,6 +348,13 @@ class MainWindow(QMainWindow):
         )
         info.setObjectName("Muted")
         panel.main_layout.addWidget(info)
+
+        self.input = QLineEdit()
+        self.input.setPlaceholderText("ENTER FREQ TEXT: ")
+        self.submit = QPushButton("Decode")
+        self.submit.clicked.connect(self.check_answer1)
+        panel.main_layout.addWidget(self.input)
+        panel.main_layout.addWidget(self.submit)
         return panel
 
     def create_archive(self):
@@ -430,14 +438,28 @@ class MainWindow(QMainWindow):
         else:
             audio_file = self.audio_dir / reception.signal.audio_file
             signal = reception.signal
+            if signal.id == "empty_channel":
+                self.spectogram.load(audio_file)
             self.signal_val.setText(signal.name.upper())
             self.signal_val.setStyleSheet("color: #9DBB91;")
             self.status_msg.setText(f"CARRIER DETECTED // {signal.id.upper()}")
 
         p = str(audio_file.resolve())
+        print(p)
 
         if p != self.current_audio and audio_file.exists():
             self.player.stop()
             self.player.setSource(QUrl.fromLocalFile(p))
             self.player.play()
             self.current_audio = p
+
+    def check_answer1(self):
+        answer = self.input.text().strip()
+
+        if answer == "3174":
+            self.receiver.unlock_signal("first_contact")
+            self.input.setEnabled(False)
+            self.status_msg.setText("DECODED SUCCESSFULLY // 3.174 Identified")
+
+        else:
+            self.status_msg.setText("DECODE FAILED // recheck the spectogram")
